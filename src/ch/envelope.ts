@@ -1,6 +1,22 @@
+import { createHash } from "node:crypto";
+
 import { create } from "xmlbuilder2";
 
 import { buildCHMD5AuthValue } from "./auth-hash.js";
+
+/**
+ * Per the CH Technical Interface Specification (TIS v5.3 §3.3):
+ *   "The <SenderID> element ... is the result of passing the Presenter_ID
+ *   assigned to the presenter on registering to use the Companies House
+ *   Software Filing service via the XML Gateway, through the lowercase
+ *   MD5 Hash algorithm."
+ *
+ * So the wire format for SenderID is not the raw Presenter_ID — it's
+ * MD5(Presenter_ID) as lowercase hex.
+ */
+function senderIdFromPresenterId(presenterId: string): string {
+  return createHash("md5").update(presenterId, "utf8").digest("hex");
+}
 
 export interface EnvelopeParams {
   /** Class of the message, e.g. "IncorporationCompany" for IN01. */
@@ -56,7 +72,7 @@ export function buildGovTalkEnvelope(p: EnvelopeParams): string {
       .up()
       .ele("SenderDetails")
         .ele("IDAuthentication")
-          .ele("SenderID").txt(p.presenterId).up()
+          .ele("SenderID").txt(senderIdFromPresenterId(p.presenterId)).up()
           .ele("Authentication")
             .ele("Method").txt("CHMD5").up()
             .ele("Value").txt(auth).up()

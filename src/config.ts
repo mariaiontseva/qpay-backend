@@ -30,8 +30,11 @@ const schema = z.object({
   // waiting on Karolina.
   MOCK_CH_GATEWAY: z.enum(["0", "1"]).default("0"),
 
-  // Supabase
-  SUPABASE_URL: z.string().url().optional(),
+  // Supabase — required; backend uses the anon key + a security-definer
+  // RPC for the submission-sequence counter. Service role only needed
+  // later when we bypass RLS on user/company tables.
+  SUPABASE_URL: z.string().url(),
+  SUPABASE_ANON_KEY: z.string().min(1),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
 });
 
