@@ -63,7 +63,31 @@ This will:
 4. POST to the XML Gateway (sandbox when `CH_TEST_FLAG=1`).
 5. Write the outgoing XML and the full response to `./logs/` for Karolina at CH Software Support to review.
 
-**IMPORTANT:** `TransactionID`s must be unique and incremental. Never reset `data/submission-state.json` without telling Karolina first — non-incrementing ids get rejected immediately.
+---
+
+## ⚠️ Non-negotiable rules — read before touching anything
+
+### 1. `TransactionID`s MUST be unique and strictly incremental
+
+> *"Submission numbers have to be unique and incremental. This is very important, non-unique / incremental submission numbers will result in immediate rejections."* — Karolina, CH Software Developer Support
+
+- The counter lives at `data/submission-state.json` (format: `{"next": N}`).
+- `src/ch/submission-sequence.ts::nextTransactionId()` reads → increments → writes atomically on every submission.
+- **Never reset `data/submission-state.json`.** Not locally, not after rebasing, not to "start fresh" in a new checkout. If anyone resets it, every future submission will be rejected by CH until we catch up past the last used id.
+- When we migrate the counter to Postgres later, the initial row seed **must** be the last value used by the flat file, not `1`.
+- This file is already in `.gitignore` — do not `git add -f` it.
+
+### 2. Every test submission is reviewed by Karolina
+
+> *"Your next step now is to tell me when you have submitted tests so I can review them."*
+
+After each `npm run ch:test-submit`, notify Maria with the outcome and the paths to `logs/submit-*.xml` and `logs/response-*.xml` so she can forward them to Karolina. CH sandbox submissions are not fire-and-forget.
+
+### 3. Credentials stay in `.env`
+
+Test credentials (Presenter ID, Auth Value, Package Reference) go in `.env` — never in a commit, never in logs, never in issue comments.
+
+---
 
 ## Layout
 
