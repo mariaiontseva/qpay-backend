@@ -23,11 +23,13 @@ export interface SubmitResult {
 export async function submitIn01(args: {
   bodyXml: string;
   transactionId: string;
+  /** Optional out-param: the full outgoing envelope, for logging. */
+  onEnvelopeBuilt?: (envelope: string) => void;
 }): Promise<SubmitResult> {
   const cfg = loadConfig();
 
   const envelope = buildGovTalkEnvelope({
-    messageClass: "IncorporationCompany",
+    messageClass: "CompanyIncorporation",
     qualifier: "request",
     func: "submit",
     transactionId: args.transactionId,
@@ -37,6 +39,21 @@ export async function submitIn01(args: {
     packageReference: cfg.CH_PACKAGE_REFERENCE,
     bodyXml: args.bodyXml,
   });
+  args.onEnvelopeBuilt?.(envelope);
+
+  if (cfg.MOCK_CH_GATEWAY === "1") {
+    const fakeCompanyNumber =
+      "99" + String(Math.floor(Math.random() * 10_000_000)).padStart(7, "0");
+    return {
+      httpStatus: 200,
+      transactionId: args.transactionId,
+      outcome: "accepted",
+      rawResponse:
+        `<MockedResponse companyNumber="${fakeCompanyNumber}" ` +
+        `transactionId="${args.transactionId}"/>`,
+      errors: [],
+    };
+  }
 
   const response = await fetch(cfg.CH_GATEWAY_URL, {
     method: "POST",

@@ -7,7 +7,7 @@ describe("CHMD5 auth value", () => {
     const hash = buildCHMD5AuthValue({
       presenterId: "66666566000",
       authValue: "DMPRES11127",
-      bodyXml: "<CompanyIncorporation/>",
+      transactionId: "QPY000001",
     });
     expect(hash).toMatch(/^[0-9a-f]{32}$/);
   });
@@ -16,7 +16,7 @@ describe("CHMD5 auth value", () => {
     const args = {
       presenterId: "ID",
       authValue: "AUTH",
-      bodyXml: "<x/>",
+      transactionId: "T1",
     };
     expect(buildCHMD5AuthValue(args)).toBe(buildCHMD5AuthValue(args));
   });
@@ -25,12 +25,12 @@ describe("CHMD5 auth value", () => {
     const base = {
       presenterId: "ID",
       authValue: "AUTH",
-      bodyXml: "<x/>",
+      transactionId: "T1",
     };
-    const diffBody = buildCHMD5AuthValue({ ...base, bodyXml: "<y/>" });
+    const diffTx = buildCHMD5AuthValue({ ...base, transactionId: "T2" });
     const diffAuth = buildCHMD5AuthValue({ ...base, authValue: "OTHER" });
     const original = buildCHMD5AuthValue(base);
-    expect(diffBody).not.toBe(original);
+    expect(diffTx).not.toBe(original);
     expect(diffAuth).not.toBe(original);
   });
 });

@@ -60,7 +60,17 @@ async function main() {
   // eslint-disable-next-line no-console
   console.log(`[test-submit] transactionId = ${transactionId}`);
 
-  const result = await submitIn01({ bodyXml, transactionId });
+  let envelopeXml = "";
+  const result = await submitIn01({
+    bodyXml,
+    transactionId,
+    onEnvelopeBuilt: (env) => (envelopeXml = env),
+  });
+
+  const envPath = `logs/envelope-${stamp}-${transactionId}.xml`;
+  await writeFile(envPath, envelopeXml, "utf8");
+  // eslint-disable-next-line no-console
+  console.log(`[test-submit] full envelope → ${basename(envPath)}`);
 
   const respPath = `logs/response-${stamp}-${transactionId}.xml`;
   await writeFile(respPath, result.rawResponse, "utf8");

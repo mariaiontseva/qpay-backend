@@ -38,8 +38,8 @@ export async function formationRoutes(app: FastifyInstance) {
   /**
    * POST /formation/submit
    *
-   * Builds an IN01 from the supplied solo-founder input, submits it to the
-   * Companies House XML Gateway, and returns CH's response.
+   * Builds an IN01 from the supplied Ltd incorporation input, submits it
+   * to the Companies House XML Gateway, and returns CH's outcome.
    *
    * Auth is NOT wired yet — the mobile app will send its Supabase session
    * JWT once the middleware is in place.
@@ -63,6 +63,66 @@ export async function formationRoutes(app: FastifyInstance) {
       outcome: result.outcome,
       httpStatus: result.httpStatus,
       errors: result.errors,
+    });
+  });
+
+  /**
+   * POST /formation/submit-sample
+   *
+   * Convenience endpoint for mobile client smoke-tests. Takes just a
+   * company name, uses sensible defaults for everything else, submits,
+   * and returns the outcome. Not for production.
+   */
+  app.post("/formation/submit-sample", async (req, reply) => {
+    const body = z
+      .object({ companyName: z.string().min(3).max(160) })
+      .safeParse(req.body);
+    if (!body.success) {
+      return reply.status(400).send({
+        error: "invalid_request",
+        details: body.error.flatten(),
+      });
+    }
+
+    const sampleInput = {
+      companyName: body.data.companyName,
+      sicCode: "62012",
+      registeredOffice: {
+        premise: "Office 1.01",
+        street: "411 Oxford Street",
+        postTown: "London",
+        postcode: "W1C 2PE",
+        country: "GB-ENG" as const,
+      },
+      director: {
+        title: "Mr",
+        forename: "John",
+        surname: "Donn",
+        dateOfBirth: "1988-05-12",
+        nationality: "British",
+        countryOfResidence: "United Kingdom",
+        residentialAddress: {
+          premise: "45",
+          street: "King's Road",
+          postTown: "London",
+          postcode: "SW3 4UH",
+          country: "GB",
+        },
+        personalCode: "TEST000001A",
+      },
+      registeredEmail: "noreply@qpayments.co.uk",
+    };
+
+    const bodyXml = buildSoloIn01(sampleInput);
+    const transactionId = await nextTransactionId();
+    const result = await submitIn01({ bodyXml, transactionId });
+
+    return reply.send({
+      transactionId,
+      outcome: result.outcome,
+      httpStatus: result.httpStatus,
+      errors: result.errors,
+      filedName: `${body.data.companyName} Ltd`,
     });
   });
 }

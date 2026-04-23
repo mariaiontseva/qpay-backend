@@ -24,6 +24,12 @@ const schema = z.object({
   // Companies House — Public Data API (read-only search)
   CH_PUBLIC_API_KEY: z.string().optional(),
 
+  // Set to "1" while CH test credentials are pending or under review to skip
+  // the real XML Gateway round-trip and return a fake-accepted response.
+  // Lets the frontend-to-backend contract be exercised end-to-end without
+  // waiting on Karolina.
+  MOCK_CH_GATEWAY: z.enum(["0", "1"]).default("0"),
+
   // Supabase
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),

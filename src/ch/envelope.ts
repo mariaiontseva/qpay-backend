@@ -33,7 +33,7 @@ export function buildGovTalkEnvelope(p: EnvelopeParams): string {
   const auth = buildCHMD5AuthValue({
     presenterId: p.presenterId,
     authValue: p.authValue,
-    bodyXml: p.bodyXml,
+    transactionId: p.transactionId,
   });
 
   const timestamp = new Date().toISOString();
@@ -59,14 +59,15 @@ export function buildGovTalkEnvelope(p: EnvelopeParams): string {
           .ele("SenderID").txt(p.presenterId).up()
           .ele("Authentication")
             .ele("Method").txt("CHMD5").up()
-            .ele("Role").txt("principal").up()
             .ele("Value").txt(auth).up()
           .up()
         .up()
       .up()
     .up()
     .ele("GovTalkDetails")
-      .ele("Keys").up()
+      .ele("Keys")
+        .ele("Key", { Type: "PackageReference" }).txt(p.packageReference).up()
+      .up()
     .up()
     .ele("Body").txt("__BODY_PLACEHOLDER__").up()
     .up();
